@@ -1,0 +1,16 @@
+--- contiki-2.5.orig/core/net/uip.c	2011-09-06 15:43:39.000000000 -0600
++++ contiki-2.5/core/net/uip.c	2012-02-15 23:15:18.413803065 -0700
+@@ -377,7 +377,12 @@
+     uip_conns[c].tcpstateflags = UIP_CLOSED;
+   }
+ #if UIP_ACTIVE_OPEN || UIP_UDP
+-  lastport = 1024;
++
++{
++	// simmons-hack: marker for initial source-port
++	u16_t x[5] = {0xdead, 0xbeef, 0x0000, 0xdead, 0xbeef};
++  lastport = 1024 + x[2];
++}
+ #endif /* UIP_ACTIVE_OPEN || UIP_UDP */
+ 
+ #if UIP_UDP

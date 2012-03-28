@@ -1,0 +1,38 @@
+diff -Nru contiki-2.5.orig/platform/c64/contiki-main.c contiki-2.5/platform/c64/contiki-main.c
+--- contiki-2.5.orig/platform/c64/contiki-main.c	2011-09-06 15:43:39.000000000 -0600
++++ contiki-2.5/platform/c64/contiki-main.c	2012-02-13 00:40:44.171722661 -0700
+@@ -63,6 +63,7 @@
+ main(void)
+ {
+   struct ethernet_config *ethernet_config;
++  struct process *vncclient_process = NULL;
+ 
+   process_init();
+ 
+@@ -120,6 +121,26 @@
+     process_run();
+ 
+     etimer_request_poll();
++
++    if (! vncclient_process) {
++        // look for vncclient
++        struct process *q;
++        for (q = PROCESS_LIST(); q != NULL; q = q->next) {
++            if (strcmp(q->name, "vncclient")==0) {
++                vncclient_process = q;
++                break;
++            }
++        }
++    } else {
++        struct process *q;
++        for (q = PROCESS_LIST(); q != vncclient_process && q != NULL; q = q->next);
++        if (q == NULL) {
++            // time to leave
++            break;
++        }
++    }
++
++
+   }
+ }
+ /*-----------------------------------------------------------------------------------*/

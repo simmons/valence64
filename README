@@ -1,0 +1,97 @@
+
+Valence64: The input-only VNC client for the Commodore 64
+======================================================================
+
+(c) 2012 David Simmons
+Licensed under the Apache License, Version 2.0
+
+http://cafbit.com/entry/valence64
+
+Valence64 is a simple proof-of-concept application for controlling a
+remote computer using a networked Commodore 64.  It was developed as
+a way for me to learn the Contiki framework and the uIP TCP/IP stack,
+both of which are used in actual modern-day embedded systems.
+
+
+Using Valence64
+----------------------------------------
+
+The easiest way to use Valence64 is to obtain a prebuilt version of the
+valence.d64 disk image from the above web site.  Attach the disk image
+to your C64 emulator, or write the image to a 1541 5.25" disk for use on
+an actual C64.
+
+Run the SETUP program to configure your TCP/IP settings, select an
+ethernet driver, and indicate the VNC server address of the host you
+want to control:
+
+LOAD "SETUP",8
+RUN
+
+Then, load and run Valence64:
+
+LOAD "VALENCE64",8
+RUN
+
+Press F1 to connect to the VNC server.  By default, the program is in
+"mouse mode" -- CRSR keys will be used to move the mouse, and RETURN
+will send a mouse click.  Press F7 to toggle "keyboard mode" for typing.
+A joystick in control port 2 can also be used to operate the mouse
+pointer.
+
+
+Building Valence64
+----------------------------------------
+
+Requirements:
+	Linux development machine.
+		(It could be made to work with other platforms.)
+	Contiki 2.5
+	The cc65 compiler/assembler (cc65-c64-2.13.2-1)
+
+You must have a copy of the Contiki 2.5 source code located in the
+../contiki-2.5 directory relative to the root of the Valence64 source.
+Patch the Contiki source with the supplied contiki-2.5-autostart.patch
+file:
+
+$ cd ../contiki-2.5
+$ patch -p1 < ../valence64/contiki-2.5-autostart.patch 
+
+If you want to use my randomizesrcport.pl script to randomize the
+initial source port number (which is useful during development), then
+also apply this patch (and uncomment ./randomizesrcport.pl from the disk
+target of the Makefile):
+
+$ patch -p1 < ../valence64/contiki-2.5-randomsrcport.patch 
+
+You must also have the cc65 compiler/assembler package installed in
+/usr/local/bin.  (Or edit the CC65_HOME value in vncclient/Makefile to
+point to the location.)
+
+Type "make".
+
+
+Build concept
+----------------------------------------
+
+Valence64 uses a somewhat convoluted process to produce the final
+product, due to it being a BASIC/ML hybrid program.  In the final
+output, the binary 6502 executable code ("ML code") is appended to the
+end of the BASIC program, and launched from BASIC via a SYS call.  This
+poses several challenges:
+
+1. The ML link step needs knowledge of the final memory location of the
+program for proper linking.  This location will change every time the
+BASIC program is modified, since the starting address will be at the end
+of the BASIC code.
+2. The BASIC program doesn't know the memory locations to SYS until the
+ML code is compiled/assembled/linked.
+
+To work around this, I use scripts for post-processing.  This allows the
+BASIC program to SYS with placeholder addresses, which are filled in
+based on the symbol table used by the linker.   During linking, which
+happens after the BASIC program has been rendered into a tight PRG file,
+a script inspects the PRG file and determines the ML starting address.
+A linker configuration is dynamically built from this information using
+a template.
+
